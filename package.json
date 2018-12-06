@@ -1,0 +1,19 @@
+{
+  "name": "wot-data",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "dependencies": {
+    "assert": "^1.4.1",
+    "aws-sdk": "^2.371.0",
+    "mongodb": "^3.1.10",
+    "request": "^2.88.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "author": "",
+  "license": "ISC"
+}
