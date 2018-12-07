@@ -4,7 +4,7 @@ const request = require("request");
 const AWS = require('aws-sdk');
 
 // msec between loop
-const loopMsec = 100;
+const loopMsec = 5000;
 // Folder in the S3 bucket we are using
 const s3Folder = 'account_info'
 // Region - sea, ru, na or eu
@@ -82,10 +82,8 @@ function mainLoop() {
 			if (err) throw err;
 
 			getAccountInfo(result[0]['account_id'], result[0]['region'])
-				// .then((account_info) => console.log(account_info))
-				.then((account_info) => saveAccountInfo(account_info))
+        .then((account_info) => saveAccountInfo(account_info))
 				.then((last_battle_time) => updateAccounts(result[0]['account_id'], region, last_battle_time))
-				// .then(updateAccounts(result[0]['account_id'],region,last_battle_time))
 				.catch(err => console.log("ERROR - ACCOUNT INFO: " + err));
 
 		});
@@ -157,6 +155,56 @@ function saveAccountInfo(account_info) {
 
 	return last_battle_time;
 
+}
+
+function getTankStats(account_id, region) {
+	console.log('ACCOUNT INFO ' + account_id + ' region: ' + region + ' API Request')
+	// Setting URL and headers for request
+	var propertiesObject = {
+		application_id: config[region].application_id,
+		account_id: account_id
+	};
+	var options = {
+		url: config[region].api_tanks_stats,
+		qs: propertiesObject
+	};
+	// Start Promise
+	return new Promise(function(resolve, reject) {
+		request.get(options, function(err, resp, body) {
+			if (err) {
+				reject(err);
+			} else {
+        // Parse and trim the result, if something goes wrong this stage is caught and next stages will not execute
+				try {
+					console.log('TANK STATS ' + account_id + ' region: ' + region + ' API Response: ' + resp.statusCode)
+					var tank_stats = JSON.parse(body);
+					// console.log('***** ORIGINAL *****');
+					// console.log(tank_stats['data'][account_id]);
+					for (tank in tank_stats['data'][account_id]) {
+            for(battle_type in tank_stats['data'][account_id][tank]) {
+
+              try {
+                if (tank_stats['data'][account_id][tank][battle_type]['battles'] == 0) {
+                  delete tank_stats['data'][account_id][tank][battle_type];
+                }
+              }
+              // Errors are normal
+              catch (error) {}
+
+            }
+
+					};
+					tank_stats['data'][account_id]['region'] = region;
+					console.log('TANK STATS ' + account_id + ' region: ' + region + ' Response trimmed')
+					// console.log('***** TRIMMED *****');
+					// console.log(tank_stats['data'][account_id]);
+					resolve(tank_stats['data'][account_id]);
+				} catch (error) {
+					reject(error)
+				}
+			}
+		})
+	})
 }
 
 function updateAccounts(account_id, region, last_battle_time) {
