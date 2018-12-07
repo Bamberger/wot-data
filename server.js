@@ -7,7 +7,6 @@ const AWS = require('aws-sdk');
 const loopMsec = 100;
 // Folder in the S3 bucket we are using
 const s3Folder = 'account_info'
-
 // Region - sea, ru, na or eu
 const region = process.env.REGION;
 // Mongo Connection URL
@@ -33,6 +32,19 @@ config.sea.application_id = process.env.WGAPPID;
 config.sea.api_account_list = 'http://api.worldoftanks.asia/wot/account/list/';
 config.sea.api_account_info = 'http://api.worldoftanks.asia/wot/account/info/';
 config.sea.api_tanks_stats = 'https://api.worldoftanks.asia/wot/tanks/stats/';
+
+setInterval(function() {
+  http.get(process.env.URL);
+}, 300000); // every 5 minutes (300000)
+
+var http = require("http");
+http
+  .createServer(function(req, res) {
+    res.writeHead(200, { "Content-Type": "text/plain" });
+    res.write("Server is running!");
+    res.end();
+  })
+  .listen(PORT);
 
 // Connect to Mongo
 client.connect(function(err) {
@@ -69,7 +81,6 @@ function mainLoop() {
 		.toArray(function(err, result) {
 			if (err) throw err;
 
-
 			getAccountInfo(result[0]['account_id'], result[0]['region'])
 				// .then((account_info) => console.log(account_info))
 				.then((account_info) => saveAccountInfo(account_info))
@@ -97,12 +108,12 @@ function getAccountInfo(account_id, region) {
 			if (err) {
 				reject(err);
 			} else {
+        // Parse and trim the result, if something goes wrong this stage is caught and next stages will not execute
 				try {
 					console.log('ACCOUNT INFO ' + account_id + ' region: ' + region + ' API Response: ' + resp.statusCode)
 					var account_info = JSON.parse(body);
 					// console.log('***** ORIGINAL *****');
 					// console.log(account_info['data'][account_id]['statistics']);
-
 					for (element in account_info['data'][account_id]['statistics']) {
 						try {
 							if (account_info['data'][account_id]['statistics'][element]['battles'] == 0) {
@@ -155,7 +166,6 @@ function updateAccounts(account_id, region, last_battle_time) {
 		Date.now() -
 		1000 * last_battle_time
 	);
-	// context.log(`Time since last battle: ` + gap_last_battle);
 
 	if (gap_last_battle >= 604800000) {
 		var next_update_msec = 604800000 + Date.now();
@@ -178,6 +188,5 @@ function updateAccounts(account_id, region, last_battle_time) {
 			console.log('ACCOUNT INFO ' + account_id + ' region: ' + region + ' DB Updated');
 		}
 	});
-
 
 }
