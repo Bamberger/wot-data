@@ -4,9 +4,10 @@ const request = require("request");
 const AWS = require('aws-sdk');
 
 // msec between loop
-const loopMsec = 5000;
+const loopMsec = 200;
 // Folder in the S3 bucket we are using
-const s3Folder = 'account_info'
+const s3FolderAccountInfo = 'account_info'
+const s3FolderTankStats = 'tank_stats'
 // Region - sea, ru, na or eu
 const region = process.env.REGION;
 // Mongo Connection URL
@@ -79,12 +80,26 @@ function mainLoop() {
         ]
     )
 		.toArray(function(err, result) {
-			if (err) throw err;
-
-			getAccountInfo(result[0]['account_id'], result[0]['region'])
-        .then((account_info) => saveAccountInfo(account_info))
-				.then((last_battle_time) => updateAccounts(result[0]['account_id'], region, last_battle_time))
-				.catch(err => console.log("ERROR - ACCOUNT INFO: " + err));
+      if (err) throw err;
+      
+      // // Pre getTankStats chain
+			// getAccountInfo(result[0]['account_id'], result[0]['region'])
+      //   .then((account_info) => saveAccountInfo(account_info))
+			// 	.then((last_battle_time) => updateAccounts(result[0]['account_id'], region, last_battle_time))
+      // 	.catch(err => console.log("ERROR - ACCOUNT INFO: " + err));
+      
+      // Post getTankStats chain
+      //Get the Account Info from WG API and trim
+      getAccountInfo(result[0]['account_id'], region)
+      //Save AccountInfo to S3
+      .then((account_info) => saveAccountInfo(account_info))
+      // Get Tank Stats from WG API and trim
+      .then((last_battle_time) => getTankStats(result[0]['account_id'], region, last_battle_time))
+      // Save Tank Stats to S3
+      .then((tank_stats) => saveTankStats(tank_stats))
+      // Update DB with last_battle_time -> next_update_msec
+      .then((last_battle_time) => updateAccounts(result[0]['account_id'], region, last_battle_time))
+      .catch(err => console.log("ERROR - ACCOUNT INFO: " + err));
 
 		});
 }
@@ -138,7 +153,7 @@ function saveAccountInfo(account_info) {
 	var account_id = account_info['account_id'];
 	var last_battle_time = account_info['last_battle_time'];
 	var region = account_info['region'];
-	var keystring = s3Folder + '/' + account_id + '-' + last_battle_time
+	var keystring = s3FolderAccountInfo + '/' + account_id + '-' + last_battle_time
 
 	s3.putObject({
 		Bucket: process.env.S3BUCKET,
@@ -157,12 +172,19 @@ function saveAccountInfo(account_info) {
 
 }
 
-function getTankStats(account_id, region) {
+function getTankStats(account_id, region, last_battle_time) {
 	console.log('ACCOUNT INFO ' + account_id + ' region: ' + region + ' API Request')
-	// Setting URL and headers for request
+  // Setting URL and headers for request
+  
+  // // TODO: Taken from Python, need to adjust this API call appropriately. Need to check which of those we need
+  // var fields = '-team,-regular_team,-stronghold_defense,-company'
+  // var extra = 'ranked'
+
 	var propertiesObject = {
 		application_id: config[region].application_id,
-		account_id: account_id
+		account_id: account_id,
+		extra: 'ranked',
+		fields: '-company,-team,-regular_team'
 	};
 	var options = {
 		url: config[region].api_tanks_stats,
@@ -193,18 +215,54 @@ function getTankStats(account_id, region) {
 
             }
 
-					};
-					tank_stats['data'][account_id]['region'] = region;
-					console.log('TANK STATS ' + account_id + ' region: ' + region + ' Response trimmed')
-					// console.log('***** TRIMMED *****');
+          };
+
+          // console.log('***** TRIMMED *****');
 					// console.log(tank_stats['data'][account_id]);
-					resolve(tank_stats['data'][account_id]);
+          
+          var output = {}
+          output['account_id'] = account_id;
+          output['region'] = region;
+          output['last_battle_time'] = last_battle_time;
+          output['tank_stats'] = tank_stats['data'][account_id]
+          console.log('TANK STATS ' + account_id + ' region: ' + region + ' Response trimmed')
+
+          // var fs = require('fs');
+          // fs.writeFile('output.json', JSON.stringify(output), function(err, data){
+          //     if (err) console.log(err);
+          //     console.log("Successfully Written to File.");
+          // });
+
+					resolve(output);
 				} catch (error) {
 					reject(error)
 				}
 			}
 		})
 	})
+}
+
+function saveTankStats(tank_stats) {
+	var account_id = tank_stats['account_id'];
+	var last_battle_time = tank_stats['last_battle_time'];
+	var region = tank_stats['region'];
+	var keystring = s3FolderTankStats + '/' + account_id + '-' + last_battle_time
+
+	s3.putObject({
+		Bucket: process.env.S3BUCKET,
+		Key: keystring,
+		Body: JSON.stringify(tank_stats),
+		ContentType: "application/json"
+	}, function(err, data) {
+		if (err) {
+			console.log('ERROR - TANK STATS ' + account_id + ' region: ' + region + ' Uploading to S3: ' + err);
+		} else {
+			console.log('TANK STATS ' + account_id + ' region: ' + region + ' Uploaded to S3');
+		}
+	});
+
+	return last_battle_time;
+
 }
 
 function updateAccounts(account_id, region, last_battle_time) {
@@ -231,9 +289,9 @@ function updateAccounts(account_id, region, last_battle_time) {
 		}
 	}, function(err, data) {
 		if (err) {
-			console.log('ERROR - ACCOUNT INFO ' + account_id + ' region: ' + region + ' DB Update failed: ' + err);
+			console.log('ERROR - UPDATE ACCOUNT ' + account_id + ' region: ' + region + ' DB Update failed: ' + err);
 		} else {
-			console.log('ACCOUNT INFO ' + account_id + ' region: ' + region + ' DB Updated');
+			console.log('UPDATE ACCOUNT ' + account_id + ' region: ' + region + ' DB Updated');
 		}
 	});
 
