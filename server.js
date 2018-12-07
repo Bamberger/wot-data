@@ -27,6 +27,7 @@ const s3 = new AWS.S3({
 	}
 });
 
+// WG API details for each region
 var config = {};
 config.sea = {};
 config.sea.application_id = process.env.WGAPPID;
@@ -34,18 +35,18 @@ config.sea.api_account_list = 'http://api.worldoftanks.asia/wot/account/list/';
 config.sea.api_account_info = 'http://api.worldoftanks.asia/wot/account/info/';
 config.sea.api_tanks_stats = 'https://api.worldoftanks.asia/wot/tanks/stats/';
 
+// Heroku Web Keepalive
 setInterval(function() {
   http.get(process.env.URL);
 }, 300000); // every 5 minutes (300000)
-
+// Create HTTP listener for Keepalive
 var http = require("http");
-http
-  .createServer(function(req, res) {
-    res.writeHead(200, { "Content-Type": "text/plain" });
-    res.write("Server is running!");
-    res.end();
-  })
-  .listen(process.env.PORT);
+http.createServer(function(req, res) {
+	res.writeHead(200, { "Content-Type": "text/plain" });
+	res.write("Server is running!");
+	res.end();
+})
+.listen(process.env.PORT);
 
 // Connect to Mongo
 client.connect(function(err) {
@@ -58,6 +59,7 @@ client.connect(function(err) {
 	// client.close();
 });
 
+// Main Loop, Gets 1 account_id from the DB for the specified region
 function mainLoop() {
 	// console.log('Running Loop');
 	const db = client.db(dbName);
@@ -82,12 +84,6 @@ function mainLoop() {
 		.toArray(function(err, result) {
       if (err) throw err;
       
-      // // Pre getTankStats chain
-			// getAccountInfo(result[0]['account_id'], result[0]['region'])
-      //   .then((account_info) => saveAccountInfo(account_info))
-			// 	.then((last_battle_time) => updateAccounts(result[0]['account_id'], region, last_battle_time))
-      // 	.catch(err => console.log("ERROR - ACCOUNT INFO: " + err));
-      
       // Post getTankStats chain
       //Get the Account Info from WG API and trim
       getAccountInfo(result[0]['account_id'], region)
@@ -98,8 +94,9 @@ function mainLoop() {
       // Save Tank Stats to S3
       .then((tank_stats) => saveTankStats(tank_stats))
       // Update DB with last_battle_time -> next_update_msec
-      .then((last_battle_time) => updateAccounts(result[0]['account_id'], region, last_battle_time))
-      .catch(err => console.log("ERROR - ACCOUNT INFO: " + err));
+			.then((last_battle_time) => updateAccounts(result[0]['account_id'], region, last_battle_time))
+			// Catch any errors
+      .catch(err => console.log("ERROR: " + err));
 
 		});
 }
@@ -173,13 +170,9 @@ function saveAccountInfo(account_info) {
 }
 
 function getTankStats(account_id, region, last_battle_time) {
-	console.log('ACCOUNT INFO ' + account_id + ' region: ' + region + ' API Request')
-  // Setting URL and headers for request
-  
-  // // TODO: Taken from Python, need to adjust this API call appropriately. Need to check which of those we need
-  // var fields = '-team,-regular_team,-stronghold_defense,-company'
-  // var extra = 'ranked'
+	console.log('TANK STATS ' + account_id + ' region: ' + region + ' API Request')
 
+  // Setting URL and headers for request
 	var propertiesObject = {
 		application_id: config[region].application_id,
 		account_id: account_id,
@@ -204,7 +197,6 @@ function getTankStats(account_id, region, last_battle_time) {
 					// console.log(tank_stats['data'][account_id]);
 					for (tank in tank_stats['data'][account_id]) {
             for(battle_type in tank_stats['data'][account_id][tank]) {
-
               try {
                 if (tank_stats['data'][account_id][tank][battle_type]['battles'] == 0) {
                   delete tank_stats['data'][account_id][tank][battle_type];
@@ -212,9 +204,7 @@ function getTankStats(account_id, region, last_battle_time) {
               }
               // Errors are normal
               catch (error) {}
-
             }
-
           };
 
           // console.log('***** TRIMMED *****');
@@ -226,12 +216,6 @@ function getTankStats(account_id, region, last_battle_time) {
           output['last_battle_time'] = last_battle_time;
           output['tank_stats'] = tank_stats['data'][account_id]
           console.log('TANK STATS ' + account_id + ' region: ' + region + ' Response trimmed')
-
-          // var fs = require('fs');
-          // fs.writeFile('output.json', JSON.stringify(output), function(err, data){
-          //     if (err) console.log(err);
-          //     console.log("Successfully Written to File.");
-          // });
 
 					resolve(output);
 				} catch (error) {
