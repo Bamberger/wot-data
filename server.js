@@ -176,8 +176,7 @@ function updateAccounts(account_id, region, last_battle_time) {
 
 	db.collection("accounts").updateOne({
 		account_id: account_id,
-    region: region,
-    type: "account_info"
+    region: region
 	}, {
 		$set: {
 			next_update_msec: next_update_msec
