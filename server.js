@@ -44,7 +44,7 @@ http
     res.write("Server is running!");
     res.end();
   })
-  .listen(PORT);
+  .listen(process.env.PORT);
 
 // Connect to Mongo
 client.connect(function(err) {
