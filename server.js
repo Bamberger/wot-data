@@ -4,7 +4,7 @@ const request = require("request");
 const AWS = require('aws-sdk');
 
 // msec between loop
-const loopMsec = 200;
+const loopMsec = process.env.LOOPTIME;
 // Folder in the S3 bucket we are using
 const s3FolderAccountInfo = 'account_info'
 const s3FolderTankStats = 'tank_stats'
