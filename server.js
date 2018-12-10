@@ -21,9 +21,11 @@ const client = new MongoClient(dbUrl, {
 
 // Setup S3 access
 const s3 = new AWS.S3({
+	endpoint: process.env.MINIOADDR,
+	s3ForcePathStyle: true, // needed with minio?
 	credentials: {
 		accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-		secretAccessKey: process.env.SECRET_ACCESS_KEY_ID,
+		secretAccessKey: process.env.SECRET_ACCESS_KEY_ID
 	}
 });
 
