@@ -56,13 +56,13 @@ client.connect(function(err) {
 	console.log("Connected successfully to server");
 
 	// Once the connection is established, start the main loop
-	setInterval(mainLoop, loopMsec);
+	setInterval(mainCode, loopMsec);
 
 	// client.close();
 });
 
-// Main Loop, Gets 1 account_id from the DB for the specified region
-function mainLoop() {
+// Main Code, Gets 1 account_id from the DB for the specified region
+function mainCode() {
 	// console.log('Running Loop');
 	const db = client.db(dbName);
 
@@ -84,7 +84,12 @@ function mainLoop() {
         ]
     )
 		.toArray(function(err, result) {
-      if (err) throw err;
+	  if (err) throw err;
+
+	  if(Object.keys(result).length === 0){
+		  console.log('DB CHECK - No accounts to update')
+		  return;
+	  }
       
       // Post getTankStats chain
       //Get the Account Info from WG API and trim
