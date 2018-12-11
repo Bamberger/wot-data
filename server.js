@@ -84,12 +84,12 @@ function mainCode() {
         ]
     )
 		.toArray(function(err, result) {
-	  if (err) throw err;
+			if (err) throw err;
 
-	  if(Object.keys(result).length === 0){
-		  console.log('DB CHECK - No accounts to update')
-		  return;
-	  }
+			if(Object.keys(result).length === 0){
+				console.log('DB CHECK - No accounts to update')
+				return;
+			}
       
       // Post getTankStats chain
       //Get the Account Info from WG API and trim
