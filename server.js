@@ -253,6 +253,7 @@ function saveTankStats(tank_stats) {
 				account_id: account_id,
 				region: region,
 				total_battles: total_battles,
+				tank_id: tank_stats.tank_stats[tank]['tank_id']
 				}, {
 					$set: tank_stats.tank_stats[tank]
 				},
