@@ -1,9 +1,13 @@
 const MongoClient = require('mongodb').MongoClient;
 const assert = require('assert');
 const request = require("request");
+const AWS = require('aws-sdk');
 
 // msec between loop
 const loopMsec = process.env.LOOPTIME;
+// Folder in the S3 bucket we are using
+const s3FolderAccountInfo = 'account_info'
+const s3FolderTankStats = 'tank_stats'
 // Region - sea, ru, na or eu
 const region = process.env.REGION;
 // Mongo Connection URL
@@ -13,6 +17,16 @@ const dbName = process.env.DBNAME;
 // Create a new MongoClient
 const client = new MongoClient(dbUrl, {
 	useNewUrlParser: true
+});
+
+// Setup S3 access
+const s3 = new AWS.S3({
+	endpoint: process.env.MINIOADDR,
+	s3ForcePathStyle: true, // needed with minio?
+	credentials: {
+		accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+		secretAccessKey: process.env.SECRET_ACCESS_KEY_ID
+	}
 });
 
 // WG API details for each region
@@ -143,25 +157,20 @@ function saveAccountInfo(account_info) {
 	var account_id = account_info['account_id'];
 	var last_battle_time = account_info['last_battle_time'];
 	var region = account_info['region'];
-	const db = client.db(dbName);
+	var keystring = s3FolderAccountInfo + '/' + account_id + '-' + last_battle_time
 
-	db.collection("account_info").updateOne({
-		account_id: account_id,
-		region: region,
-		last_battle_time: last_battle_time,
-		}, {
-			$set: account_info
-		},
-		{ upsert: true},
-		function(err, data) {
-			if (err) {
-				console.log('ERROR - ACCOUNT INFO ' + account_id + ' region: ' + region + ' DB Update failed: ' + err);
-				// reject(err);
-			} else {
-				console.log('ACCOUNT INFO ' + account_id + ' region: ' + region + ' DB Updated');
-				// resolve(last_battle_time);
-			}
-		});
+	s3.putObject({
+		Bucket: process.env.S3BUCKET,
+		Key: keystring,
+		Body: JSON.stringify(account_info),
+		ContentType: "application/json"
+	}, function(err, data) {
+		if (err) {
+			console.log('ERROR - ACCOUNT INFO ' + account_id + ' region: ' + region + ' Uploading to S3: ' + err);
+		} else {
+			console.log('ACCOUNT INFO ' + account_id + ' region: ' + region + ' Uploaded to S3');
+		}
+	});
 
 	return last_battle_time;
 
@@ -174,8 +183,8 @@ function getTankStats(account_id, region, last_battle_time) {
 	var propertiesObject = {
 		application_id: config[region].application_id,
 		account_id: account_id,
-		extra: 'ranked,random',
-		fields: '-company,-team,-regular_team,-all'
+		extra: 'ranked',
+		fields: '-company,-team,-regular_team'
 	};
 	var options = {
 		url: config[region].api_tanks_stats,
@@ -194,24 +203,15 @@ function getTankStats(account_id, region, last_battle_time) {
 					// console.log('***** ORIGINAL *****');
 					// console.log(tank_stats['data'][account_id]);
 					for (tank in tank_stats['data'][account_id]) {
-						var total_battles =
-							tank_stats['data'][account_id][tank]['clan']['battles']
-							+ tank_stats['data'][account_id][tank]['stronghold_skirmish']['battles']
-							+ tank_stats['data'][account_id][tank]['globalmap']['battles']
-							+ tank_stats['data'][account_id][tank]['random']['battles']
-							+ tank_stats['data'][account_id][tank]['stronghold_defense']['battles']
-							+ tank_stats['data'][account_id][tank]['ranked']['battles'];
-
-						tank_stats['data'][account_id][tank].total_battles = total_battles;
-						for(battle_type in tank_stats['data'][account_id][tank]) {
-							try {
-								if (tank_stats['data'][account_id][tank][battle_type]['battles'] == 0) {
-								delete tank_stats['data'][account_id][tank][battle_type];
-								}
-							}
-							// Errors are normal
-							catch (error) {}
-						}
+            for(battle_type in tank_stats['data'][account_id][tank]) {
+              try {
+                if (tank_stats['data'][account_id][tank][battle_type]['battles'] == 0) {
+                  delete tank_stats['data'][account_id][tank][battle_type];
+                }
+              }
+              // Errors are normal
+              catch (error) {}
+            }
           };
 
           // console.log('***** TRIMMED *****');
@@ -237,38 +237,20 @@ function saveTankStats(tank_stats) {
 	var account_id = tank_stats['account_id'];
 	var last_battle_time = tank_stats['last_battle_time'];
 	var region = tank_stats['region'];
-	const db = client.db(dbName);
-	// var keystring = s3FolderTankStats + '/' + account_id + '-' + last_battle_time
+	var keystring = s3FolderTankStats + '/' + account_id + '-' + last_battle_time
 
-	// console.log(tank_stats);
-
-	try{
-
-		for (tank in tank_stats.tank_stats){
-			// console.log('***** TANK ***** ' + JSON.stringify(tank_stats.tank_stats[tank]));
-			var total_battles = tank_stats.tank_stats[tank]['total_battles'];
-			tank_stats.tank_stats[tank]['last_battle_time'] = last_battle_time;
-
-			db.collection("tank_stats").updateOne({
-				account_id: account_id,
-				region: region,
-				total_battles: total_battles,
-				}, {
-					$set: tank_stats.tank_stats[tank]
-				},
-				{ upsert: true},
-				function(err, data) {
-					if (err) {
-						console.log('ERROR - TANK STATS ' + account_id + ' region: ' + region + ' DB Update failed: ' + err);
-						// reject(err);
-					}
-				});	
+	s3.putObject({
+		Bucket: process.env.S3BUCKET,
+		Key: keystring,
+		Body: JSON.stringify(tank_stats),
+		ContentType: "application/json"
+	}, function(err, data) {
+		if (err) {
+			console.log('ERROR - TANK STATS ' + account_id + ' region: ' + region + ' Uploading to S3: ' + err);
+		} else {
+			console.log('TANK STATS ' + account_id + ' region: ' + region + ' Uploaded to S3');
 		}
-		console.log('TANK STATS ' + account_id + ' region: ' + region + ' DB Updated');
-	}
-	catch(error) {
-		reject(error)
-	};
+	});
 
 	return last_battle_time;
 
