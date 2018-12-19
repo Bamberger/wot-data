@@ -248,6 +248,9 @@ function saveTankStats(tank_stats) {
 			// console.log('***** TANK ***** ' + JSON.stringify(tank_stats.tank_stats[tank]));
 			var total_battles = tank_stats.tank_stats[tank]['total_battles'];
 			tank_stats.tank_stats[tank]['last_battle_time'] = last_battle_time;
+			delete tank_stats.tank_stats[tank]['in_garage'];
+			delete tank_stats.tank_stats[tank]['frags'];
+
 
 			db.collection("tank_stats").updateOne({
 				account_id: account_id,
