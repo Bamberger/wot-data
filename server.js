@@ -312,14 +312,14 @@ function updateAccounts(account_id, region, last_battle_time) {
 
 }
 
-function deleteAccount(account_id,region) {
+function deleteAccount(account_id,region){
 	const db = client.db(dbName);
 
 	db.collection("accounts")
     .deleteOne({
 		account_id: account_id,
 		region: region
-	}), function(err, data) {
+	}, function(err, data) {
 		if (err) {
 			reject('ERROR - ACCOUNT DELETE ' + account_id + ' region: ' + region + ' DB Update failed: ' + err);
 		} else {
