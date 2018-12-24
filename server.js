@@ -77,19 +77,19 @@ function mainCode() {
 				return;
 			}
       
-      // Post getTankStats chain
-      //Get the Account Info from WG API and trim
-      getAccountInfo(result[0]['account_id'], region)
-      //Save AccountInfo to S3
-      .then((account_info) => saveAccountInfo(account_info))
-      // Get Tank Stats from WG API and trim
-      .then((last_battle_time) => getTankStats(result[0]['account_id'], region, last_battle_time))
-      // Save Tank Stats to S3
-      .then((tank_stats) => saveTankStats(tank_stats))
-      // Update DB with last_battle_time -> next_update_msec
-			.then((last_battle_time) => updateAccounts(result[0]['account_id'], region, last_battle_time))
-			// Catch any errors
-      .catch(err => console.log("ERROR: " + err));
+		// Post getTankStats chain
+		//Get the Account Info from WG API and trim
+		getAccountInfo(result[0]['account_id'], region)
+		//Save AccountInfo to S3
+		.then((account_info) => saveAccountInfo(account_info))
+		// Get Tank Stats from WG API and trim
+		.then((last_battle_time) => getTankStats(result[0]['account_id'], region, last_battle_time))
+		// Save Tank Stats to S3
+		.then((tank_stats) => saveTankStats(tank_stats))
+		// Update DB with last_battle_time -> next_update_msec
+		.then((last_battle_time) => updateAccounts(result[0]['account_id'], region, last_battle_time))
+		// Catch any errors
+		.catch(err => console.log("ERROR: " + err));
 
 		});
 }
@@ -319,13 +319,8 @@ function deleteAccount(account_id,region){
     .deleteOne({
 		account_id: account_id,
 		region: region
-	}, function(err, data) {
-		if (err) {
-			reject('ERROR - ACCOUNT DELETE ' + account_id + ' region: ' + region + ' DB Update failed: ' + err);
-		} else {
-			console.log('ACCOUNT ' + account_id + ' region: ' + region + ' DELETED');
-		}
 	});
+	console.log('ACCOUNT ' + account_id + ' region: ' + region + ' DELETED');
 	
 
 }
