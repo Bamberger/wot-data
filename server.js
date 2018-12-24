@@ -112,18 +112,19 @@ function getAccountInfo(account_id, region) {
 				reject(err);
 			} else {
 		// Parse and trim the result, if something goes wrong this stage is caught and next stages will not execute
-		
-		// If data is null, delete this account to stop it being run against
-				if (account_info['data'][account_id] == 'null') {
-					console.log('ACCOUNT INFO ' + account_id + ' region: ' + region + ' NULL DATA');
-					deleteAccount(account_id,region);
-
-				}
-
-
 				try {
 					console.log('ACCOUNT INFO ' + account_id + ' region: ' + region + ' API Response: ' + resp.statusCode)
 					var account_info = JSON.parse(body);
+
+					// If data is null, delete this account to stop it being run against
+					if (account_info['data'][account_id] == 'null') {
+						console.log('ACCOUNT INFO ' + account_id + ' region: ' + region + ' NULL DATA');
+						deleteAccount(account_id,region);
+					}
+
+
+
+
 					// console.log('***** ORIGINAL *****');
 					// console.log(account_info['data'][account_id]['statistics']);
 					for (element in account_info['data'][account_id]['statistics']) {
