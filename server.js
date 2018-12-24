@@ -95,7 +95,7 @@ function mainCode() {
 }
 
 function getAccountInfo(account_id, region) {
-	console.log('ACCOUNT INFO ' + account_id + ' region: ' + region + ' API Request')
+	// console.log('ACCOUNT INFO ' + account_id + ' region: ' + region + ' API Request')
 	// Setting URL and headers for request
 	var propertiesObject = {
 		application_id: config[region].application_id,
@@ -113,7 +113,7 @@ function getAccountInfo(account_id, region) {
 			} else {
 		// Parse and trim the result, if something goes wrong this stage is caught and next stages will not execute
 				try {
-					// console.log('ACCOUNT INFO ' + account_id + ' region: ' + region + ' API Response: ' + resp.statusCode)
+					console.log('ACCOUNT INFO ' + account_id + ' region: ' + region + ' API Response: ' + resp.statusCode)
 					var account_info = JSON.parse(body);
 
 					// If data is null, delete this account to stop it being run against
@@ -194,7 +194,7 @@ function getTankStats(account_id, region, last_battle_time) {
 
 		
 				try {
-					// console.log('TANK STATS ' + account_id + ' region: ' + region + ' API Response: ' + resp.statusCode)
+					console.log('TANK STATS ' + account_id + ' region: ' + region + ' API Response: ' + resp.statusCode)
 					var tank_stats = JSON.parse(body);
 					// If data is null, delete this account to stop it being run against
 					if (tank_stats['data'][account_id] == null) {
