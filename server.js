@@ -111,7 +111,16 @@ function getAccountInfo(account_id, region) {
 			if (err) {
 				reject(err);
 			} else {
-        // Parse and trim the result, if something goes wrong this stage is caught and next stages will not execute
+		// Parse and trim the result, if something goes wrong this stage is caught and next stages will not execute
+		
+		// If data is null, delete this account to stop it being run against
+				if (account_info['data'][account_id] == 'null') {
+					console.log('ACCOUNT INFO ' + account_id + ' region: ' + region + ' NULL DATA');
+					deleteAccount(account_id,region);
+
+				}
+
+
 				try {
 					console.log('ACCOUNT INFO ' + account_id + ' region: ' + region + ' API Response: ' + resp.statusCode)
 					var account_info = JSON.parse(body);
@@ -295,7 +304,7 @@ function updateAccounts(account_id, region, last_battle_time) {
 
 	db.collection("accounts").updateOne({
 		account_id: account_id,
-    region: region
+    	region: region
 	}, {
 		$set: {
 			next_update_msec: next_update_msec
@@ -307,5 +316,15 @@ function updateAccounts(account_id, region, last_battle_time) {
 			console.log('UPDATE ACCOUNT ' + account_id + ' region: ' + region + ' DB Updated');
 		}
 	});
+
+}
+
+function deleteAccount(account_id,region) {
+	db.collection("accounts")
+    .deleteOne({
+		account_id: account_id,
+		region: region
+	});
+	console.log('ACCOUNT ' + account_id + ' region: ' + region + ' DELETED');
 
 }
