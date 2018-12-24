@@ -113,20 +113,15 @@ function getAccountInfo(account_id, region) {
 			} else {
 		// Parse and trim the result, if something goes wrong this stage is caught and next stages will not execute
 				try {
-					console.log('ACCOUNT INFO ' + account_id + ' region: ' + region + ' API Response: ' + resp.statusCode)
+					// console.log('ACCOUNT INFO ' + account_id + ' region: ' + region + ' API Response: ' + resp.statusCode)
 					var account_info = JSON.parse(body);
 
 					// If data is null, delete this account to stop it being run against
 					if (account_info['data'][account_id] == null) {
-						console.log('ACCOUNT INFO ' + account_id + ' region: ' + region + ' NULL DATA');
+						// console.log('ACCOUNT INFO ' + account_id + ' region: ' + region + ' NULL DATA');
 						deleteAccount(account_id,region);
 					}
 
-
-
-
-					// console.log('***** ORIGINAL *****');
-					// console.log(account_info['data'][account_id]['statistics']);
 					for (element in account_info['data'][account_id]['statistics']) {
 						try {
 							if (account_info['data'][account_id]['statistics'][element]['battles'] == 0) {
@@ -137,9 +132,7 @@ function getAccountInfo(account_id, region) {
 						catch (error) {}
 					};
 					account_info['data'][account_id]['region'] = region;
-					console.log('ACCOUNT INFO ' + account_id + ' region: ' + region + ' Response trimmed')
-					// console.log('***** TRIMMED *****');
-					// console.log(account_info['data'][account_id]['statistics']);
+					// console.log('ACCOUNT INFO ' + account_id + ' region: ' + region + ' Response trimmed')
 					resolve(account_info['data'][account_id]);
 				} catch (error) {
 					reject(error)
@@ -165,10 +158,10 @@ function saveAccountInfo(account_info) {
 		{ upsert: true},
 		function(err, data) {
 			if (err) {
-				console.log('ERROR - ACCOUNT INFO ' + account_id + ' region: ' + region + ' DB Update failed: ' + err);
+				reject('ERROR - ACCOUNT INFO ' + account_id + ' region: ' + region + ' DB Update failed: ' + err);
 				// reject(err);
 			} else {
-				console.log('ACCOUNT INFO ' + account_id + ' region: ' + region + ' DB Updated');
+				// console.log('ACCOUNT INFO ' + account_id + ' region: ' + region + ' DB Updated');
 				// resolve(last_battle_time);
 			}
 		});
@@ -178,7 +171,7 @@ function saveAccountInfo(account_info) {
 }
 
 function getTankStats(account_id, region, last_battle_time) {
-	console.log('TANK STATS ' + account_id + ' region: ' + region + ' API Request')
+	// console.log('TANK STATS ' + account_id + ' region: ' + region + ' API Request')
 
   // Setting URL and headers for request
 	var propertiesObject = {
@@ -197,12 +190,17 @@ function getTankStats(account_id, region, last_battle_time) {
 			if (err) {
 				reject(err);
 			} else {
-        // Parse and trim the result, if something goes wrong this stage is caught and next stages will not execute
+		// Parse and trim the result, if something goes wrong this stage is caught and next stages will not execute
+
+		
 				try {
-					console.log('TANK STATS ' + account_id + ' region: ' + region + ' API Response: ' + resp.statusCode)
+					// console.log('TANK STATS ' + account_id + ' region: ' + region + ' API Response: ' + resp.statusCode)
 					var tank_stats = JSON.parse(body);
-					// console.log('***** ORIGINAL *****');
-					// console.log(tank_stats['data'][account_id]);
+					// If data is null, delete this account to stop it being run against
+					if (tank_stats['data'][account_id] == null) {
+						// console.log('TANK STATS ' + account_id + ' region: ' + region + ' NULL DATA');
+						deleteAccount(account_id,region);
+					}
 					for (tank in tank_stats['data'][account_id]) {
 						var total_battles =
 							tank_stats['data'][account_id][tank]['clan']['battles']
@@ -232,7 +230,7 @@ function getTankStats(account_id, region, last_battle_time) {
           output['region'] = region;
           output['last_battle_time'] = last_battle_time;
           output['tank_stats'] = tank_stats['data'][account_id]
-          console.log('TANK STATS ' + account_id + ' region: ' + region + ' Response trimmed')
+        //   console.log('TANK STATS ' + account_id + ' region: ' + region + ' Response trimmed')
 
 					resolve(output);
 				} catch (error) {
@@ -312,7 +310,7 @@ function updateAccounts(account_id, region, last_battle_time) {
 		}
 	}, function(err, data) {
 		if (err) {
-			console.log('ERROR - UPDATE ACCOUNT ' + account_id + ' region: ' + region + ' DB Update failed: ' + err);
+			reject('ERROR - UPDATE ACCOUNT ' + account_id + ' region: ' + region + ' DB Update failed: ' + err);
 		} else {
 			console.log('UPDATE ACCOUNT ' + account_id + ' region: ' + region + ' DB Updated');
 		}
