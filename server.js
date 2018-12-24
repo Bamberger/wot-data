@@ -56,6 +56,7 @@ function mainCode() {
     db.collection("accounts")
     .aggregate(
       [
+		{ $sample: { size: 1 } },
         { $match:
           {$and:[
             {$or:[
@@ -65,7 +66,7 @@ function mainCode() {
             { region: region }
           ]}
         },
-        { $sample: { size: 1 } },
+        // { $sample: { size: 1 } },
         { $project: { _id: 0, account_id: 1, region: 1 } }
         ]
     )
