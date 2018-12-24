@@ -246,14 +246,9 @@ function saveTankStats(tank_stats) {
 	var last_battle_time = tank_stats['last_battle_time'];
 	var region = tank_stats['region'];
 	const db = client.db(dbName);
-	// var keystring = s3FolderTankStats + '/' + account_id + '-' + last_battle_time
-
-	// console.log(tank_stats);
 
 	try{
-
 		for (tank in tank_stats.tank_stats){
-			// console.log('***** TANK ***** ' + JSON.stringify(tank_stats.tank_stats[tank]));
 			var total_battles = tank_stats.tank_stats[tank]['total_battles'];
 			tank_stats.tank_stats[tank]['last_battle_time'] = last_battle_time;
 			delete tank_stats.tank_stats[tank]['in_garage'];
@@ -271,12 +266,12 @@ function saveTankStats(tank_stats) {
 				{ upsert: true},
 				function(err, data) {
 					if (err) {
-						console.log('ERROR - TANK STATS ' + account_id + ' region: ' + region + ' DB Update failed: ' + err);
+						reject('ERROR - TANK STATS ' + account_id + ' region: ' + region + ' DB Update failed: ' + err);
 						// reject(err);
 					}
 				});	
 		}
-		console.log('TANK STATS ' + account_id + ' region: ' + region + ' DB Updated');
+		// console.log('TANK STATS ' + account_id + ' region: ' + region + ' DB Updated');
 	}
 	catch(error) {
 		reject(error)
@@ -296,7 +291,6 @@ function updateAccounts(account_id, region, last_battle_time) {
 
 	if (gap_last_battle >= 604800000) {
 		var next_update_msec = 604800000 + Date.now();
-		// context.log(next_update_msec)
 	} else {
 		var next_update_msec = 86400000 + Date.now();
 	}
@@ -325,7 +319,13 @@ function deleteAccount(account_id,region) {
     .deleteOne({
 		account_id: account_id,
 		region: region
+	}), function(err, data) {
+		if (err) {
+			reject('ERROR - ACCOUNT DELETE ' + account_id + ' region: ' + region + ' DB Update failed: ' + err);
+		} else {
+			console.log('ACCOUNT ' + account_id + ' region: ' + region + ' DELETED');
+		}
 	});
-	console.log('ACCOUNT ' + account_id + ' region: ' + region + ' DELETED');
+	
 
 }
