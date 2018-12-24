@@ -321,6 +321,8 @@ function updateAccounts(account_id, region, last_battle_time) {
 }
 
 function deleteAccount(account_id,region) {
+	const db = client.db(dbName);
+
 	db.collection("accounts")
     .deleteOne({
 		account_id: account_id,
