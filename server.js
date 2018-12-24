@@ -117,7 +117,7 @@ function getAccountInfo(account_id, region) {
 					var account_info = JSON.parse(body);
 
 					// If data is null, delete this account to stop it being run against
-					if (account_info['data'][account_id] == 'null') {
+					if (account_info['data'][account_id] == null) {
 						console.log('ACCOUNT INFO ' + account_id + ' region: ' + region + ' NULL DATA');
 						deleteAccount(account_id,region);
 					}
