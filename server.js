@@ -56,7 +56,7 @@ function mainCode() {
     db.collection("accounts")
     .aggregate(
       [
-		{ $sample: { size: process.env.SAMPLESIZE } },
+		{ $sample: { size: (process.env.SAMPLESIZE) } },
         { $match:
           {$and:[
             {$or:[
