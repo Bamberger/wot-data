@@ -301,7 +301,8 @@ function updateAccounts(account_id, region, last_battle_time) {
     	region: region
 	}, {
 		$set: {
-			next_update_msec: next_update_msec
+			next_update_msec: next_update_msec,
+			last_battle_time: last_battle_time
 		}
 	}, function(err, data) {
 		if (err) {
