@@ -100,7 +100,8 @@ function getAccountInfo(account_id, region) {
 	// Setting URL and headers for request
 	var propertiesObject = {
 		application_id: config[region].application_id,
-		account_id: account_id
+		account_id: account_id,
+		language: 'en'
 	};
 	var options = {
 		url: config[region].api_account_info,
@@ -179,7 +180,8 @@ function getTankStats(account_id, region, last_battle_time) {
 		application_id: config[region].application_id,
 		account_id: account_id,
 		extra: 'ranked,random',
-		fields: '-company,-team,-regular_team,-all'
+		fields: '-company,-team,-regular_team,-all',
+		language: 'en'
 	};
 	var options = {
 		url: config[region].api_tanks_stats,
