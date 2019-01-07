@@ -292,8 +292,8 @@ function updateAccounts(account_id, region, last_battle_time) {
 		1000 * last_battle_time
 	);
 
-	if (gap_last_battle >= 604800000) {
-		var next_update_msec = 604800000 + Date.now();
+	if (gap_last_battle >= 2419200000) {
+		var next_update_msec = 2419200000 + Date.now();
 	} else {
 		var next_update_msec = 86400000 + Date.now();
 	}
