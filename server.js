@@ -168,23 +168,23 @@ function saveAccountInfo(account_info) {
 			}
 		});
 
-		db.collection("account_info_snapshot").updateOne({
-			account_id: account_id,
-			region: region,
-			// last_battle_time: last_battle_time,
-			}, {
-				$set: account_info
-			},
-			{ upsert: true},
-			function(err, data) {
-				if (err) {
-					reject('ERROR - ACCOUNT INFO ' + account_id + ' region: ' + region + ' DB Update failed: ' + err);
-					// reject(err);
-				} else {
-					// console.log('ACCOUNT INFO ' + account_id + ' region: ' + region + ' DB Updated');
-					// resolve(last_battle_time);
-				}
-			});
+		// db.collection("account_info_snapshot").updateOne({
+		// 	account_id: account_id,
+		// 	region: region,
+		// 	// last_battle_time: last_battle_time,
+		// 	}, {
+		// 		$set: account_info
+		// 	},
+		// 	{ upsert: true},
+		// 	function(err, data) {
+		// 		if (err) {
+		// 			reject('ERROR - ACCOUNT INFO ' + account_id + ' region: ' + region + ' DB Update failed: ' + err);
+		// 			// reject(err);
+		// 		} else {
+		// 			// console.log('ACCOUNT INFO ' + account_id + ' region: ' + region + ' DB Updated');
+		// 			// resolve(last_battle_time);
+		// 		}
+		// 	});
 
 	return last_battle_time;
 
@@ -292,21 +292,21 @@ function saveTankStats(tank_stats) {
 					}
 				});	
 
-				db.collection("tank_stats_snapshot").updateOne({
-					account_id: account_id,
-					region: region,
-					// total_battles: total_battles,
-					tank_id: tank_stats.tank_stats[tank]['tank_id']
-					}, {
-						$set: tank_stats.tank_stats[tank]
-					},
-					{ upsert: true},
-					function(err, data) {
-						if (err) {
-							reject('ERROR - TANK STATS ' + account_id + ' region: ' + region + ' DB Update failed: ' + err);
-							// reject(err);
-						}
-					});	
+				// db.collection("tank_stats_snapshot").updateOne({
+				// 	account_id: account_id,
+				// 	region: region,
+				// 	// total_battles: total_battles,
+				// 	tank_id: tank_stats.tank_stats[tank]['tank_id']
+				// 	}, {
+				// 		$set: tank_stats.tank_stats[tank]
+				// 	},
+				// 	{ upsert: true},
+				// 	function(err, data) {
+				// 		if (err) {
+				// 			reject('ERROR - TANK STATS ' + account_id + ' region: ' + region + ' DB Update failed: ' + err);
+				// 			// reject(err);
+				// 		}
+				// 	});	
 		}
 		// console.log('TANK STATS ' + account_id + ' region: ' + region + ' DB Updated');
 	}
