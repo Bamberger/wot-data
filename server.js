@@ -56,17 +56,17 @@ function mainCode() {
     db.collection("accounts")
     .aggregate(
       [
-		{ $sample: { size: (parseInt(process.env.SAMPLESIZE)) } },
+		// { $sample: { size: (parseInt(process.env.SAMPLESIZE)) } },
         { $match:
-          {$and:[
+        //   {$and:[
             {$or:[
               {next_update_msec: { $exists:false } },
               { next_update_msec: { $lt: Date.now() } }
             ]},
-            { region: region }
-          ]}
+            // { region: region }
+        //   ]}
         },
-        { $sample: { size: 1 } },
+        { $limit: 1 },
         { $project: { _id: 0, account_id: 1, region: 1 } }
         ]
     )
@@ -80,7 +80,7 @@ function mainCode() {
       
 		// Post getTankStats chain
 		//Get the Account Info from WG API and trim
-		getAccountInfo(result[0]['account_id'], region)
+		getAccountInfo(result[0]['account_id'], result[0]['region'])
 		//Save AccountInfo to S3
 		.then((account_info) => saveAccountInfo(account_info))
 		// Get Tank Stats from WG API and trim
