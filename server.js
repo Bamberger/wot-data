@@ -101,7 +101,7 @@ function getAccountInfo(account_id, region) {
 	var propertiesObject = {
 		application_id: config[region].application_id,
 		account_id: account_id,
-		extra: 'statistics.random,statistics.ranked_battles',
+		extra: 'statistics.random,statistics.ranked_battles,statistics.globalmap_absolute,statistics.globalmap_champion,statistics.globalmap_middle',
 		fields: '-statistics.company,-statistics.team,-statistics.regular_team,-statistics.all,-statistics.historical',
 		language: 'en'
 	};
