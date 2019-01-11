@@ -56,7 +56,7 @@ function mainCode() {
     db.collection("accounts")
     .aggregate(
       [
-		{ $sample: { size: (parseInt(process.env.SAMPLESIZE)) } },
+		// { $sample: { size: (parseInt(process.env.SAMPLESIZE)) } },
         { $match:
           {$and:[
             {$or:[
@@ -101,6 +101,8 @@ function getAccountInfo(account_id, region) {
 	var propertiesObject = {
 		application_id: config[region].application_id,
 		account_id: account_id,
+		extra: 'statistics.random,statistics.ranked_battles',
+		fields: '-statistics.company,-statistics.team,-statistics.regular_team,-statistics.all,-statistics.historical',
 		language: 'en'
 	};
 	var options = {
