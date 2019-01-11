@@ -2,7 +2,7 @@ const MongoClient = require('mongodb').MongoClient;
 const assert = require('assert');
 const request = require("request");
 
-// msec between loop 
+// msec between loop
 const loopMsec = process.env.LOOPTIME;
 // Region - sea, ru, na or eu
 const region = process.env.REGION;
@@ -18,7 +18,7 @@ const client = new MongoClient(dbUrl, {
 // WG API details for each region
 var config = {};
 config.sea = {};
-config.sea.application_id = process.env.WGAPPID;
+// config.sea.application_id = process.env.WGAPPID;
 config.sea.api_account_list = 'http://api.worldoftanks.asia/wot/account/list/';
 config.sea.api_account_info = 'http://api.worldoftanks.asia/wot/account/info/';
 config.sea.api_tanks_stats = 'https://api.worldoftanks.asia/wot/tanks/stats/';
@@ -99,7 +99,7 @@ function getAccountInfo(account_id, region,) {
 	// console.log('ACCOUNT INFO ' + account_id + ' region: ' + region + ' API Request')
 	// Setting URL and headers for request
 	var propertiesObject = {
-		application_id: config[region].application_id,
+		application_id: process.env.WGAPPID,
 		account_id: account_id,
 		extra: 'statistics.random,statistics.ranked_battles,statistics.globalmap_absolute,statistics.globalmap_champion,statistics.globalmap_middle',
 		fields: '-statistics.company,-statistics.team,-statistics.regular_team,-statistics.all,-statistics.historical',
@@ -197,7 +197,7 @@ function getTankStats(account_id, region, last_battle_time) {
 
   // Setting URL and headers for request
 	var propertiesObject = {
-		application_id: config[region].application_id,
+		application_id: process.env.WGAPPID,
 		account_id: account_id,
 		extra: 'ranked,random',
 		fields: '-company,-team,-regular_team,-all',
