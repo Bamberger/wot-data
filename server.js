@@ -67,7 +67,7 @@ function mainCode() {
         //   ]}
         },
         { $limit: 1 },
-        { $project: { _id: 0, account_id: 1, region: 1 } }
+        { $project: { _id: 0, account_id: 1, region: 1, last_battle_time: 1 } }
         ]
     )
 		.toArray(function(err, result) {
@@ -80,7 +80,7 @@ function mainCode() {
       
 		// Post getTankStats chain
 		//Get the Account Info from WG API and trim
-		getAccountInfo(result[0]['account_id'], result[0]['region'])
+		getAccountInfo(result[0]['account_id'], result[0]['region'], result[0]['last_battle_time'])
 		//Save AccountInfo to S3
 		.then((account_info) => saveAccountInfo(account_info))
 		// Get Tank Stats from WG API and trim
@@ -95,7 +95,7 @@ function mainCode() {
 		});
 }
 
-function getAccountInfo(account_id, region) {
+function getAccountInfo(account_id, region, current_last_battle_time) {
 	// console.log('ACCOUNT INFO ' + account_id + ' region: ' + region + ' API Request')
 	// Setting URL and headers for request
 	var propertiesObject = {
@@ -137,7 +137,11 @@ function getAccountInfo(account_id, region) {
 					};
 					account_info['data'][account_id]['region'] = region;
 					// console.log('ACCOUNT INFO ' + account_id + ' region: ' + region + ' Response trimmed')
-					resolve(account_info['data'][account_id]);
+					if (current_last_battle_time != account_info['data'][account_id]['last_battle_time']) {
+						resolve(account_info['data'][account_id]);
+					} else {
+						reject("No new games")
+					}
 				} catch (error) {
 					reject(error)
 				}
