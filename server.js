@@ -65,8 +65,8 @@ function mainCode() {
             ]},
             // { region: region }
         //   ]}
-        },
-        { $limit: 1 },
+		},
+		{ $sample: { size: 1 } },
         { $project: { _id: 0, account_id: 1, region: 1, last_battle_time: 1 } }
         ]
     )
