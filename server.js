@@ -125,8 +125,14 @@ function fillQueue() {
 				return;
 			}
 			for (i in accountlist) {
-				getBattleCount(accountlist[i])
-				.then((account_object) => getProfileSummary(account_object))
+				if(accountlist[i].hasOwnProperty("last_battle_time")) {
+					getBattleCount(accountlist[i])
+					.then((account_object) => getProfileSummary(account_object))
+				}
+				else {
+					accountlist[i]['last_battle_time'] = 0;
+					queue_accounts.push(accountlist[i]);
+				}
 			};
 		})
 	}
