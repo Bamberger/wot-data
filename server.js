@@ -162,6 +162,10 @@ function getProfileSummary(account_object){
 					queue_accounts.push(account_object)
 					// console.log(queue_accounts)
 				}
+				else {
+					// console.log( '*** NO BATTLES *** ' + account_object['account_id'] + ' ' + account_object['region'] + ' ' + account_object['last_battle_time'])
+					updateAccounts(account_object['account_id'], account_object['region'], account_object['last_battle_time'])
+				}
 			}
 		})
 	})
