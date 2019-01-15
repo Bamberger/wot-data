@@ -20,11 +20,30 @@ var queue_accounts = [];
 // WG API details for each region
 var config = {};
 config.sea = {};
-// config.sea.application_id = process.env.WGAPPID;
 config.sea.api_account_list = 'http://api.worldoftanks.asia/wot/account/list/';
 config.sea.api_account_info = 'http://api.worldoftanks.asia/wot/account/info/';
 config.sea.api_tanks_stats = 'https://api.worldoftanks.asia/wot/tanks/stats/';
 config.sea.api_profile_summary = 'https://worldoftanks.asia/wotup/profile/summary/';
+
+config.na = {};
+config.na.api_account_list = 'http://api.worldoftanks.com/wot/account/list/';
+config.na.api_account_info = 'http://api.worldoftanks.com/wot/account/info/';
+config.na.api_tanks_stats = 'https://api.worldoftanks.com/wot/tanks/stats/';
+config.na.api_profile_summary = 'https://worldoftanks.com/wotup/profile/summary/';
+
+config.eu = {};
+config.eu.api_account_list = 'http://api.worldoftanks.eu/wot/account/list/';
+config.eu.api_account_info = 'http://api.worldoftanks.eu/wot/account/info/';
+config.eu.api_tanks_stats = 'https://api.worldoftanks.eu/wot/tanks/stats/';
+config.eu.api_profile_summary = 'https://worldoftanks.eu/wotup/profile/summary/';
+
+config.ru = {};
+config.ru.api_account_list = 'http://api.worldoftanks.ru/wot/account/list/';
+config.ru.api_account_info = 'http://api.worldoftanks.ru/wot/account/info/';
+config.ru.api_tanks_stats = 'https://api.worldoftanks.ru/wot/tanks/stats/';
+config.ru.api_profile_summary = 'https://worldoftanks.ru/wotup/profile/summary/';
+
+
 
 // Heroku Web Keepalive
 setInterval(function() {
