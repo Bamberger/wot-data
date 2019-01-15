@@ -85,14 +85,14 @@ function fillQueue() {
 	queue_length = queue_accounts.length;
 	console.log('Queue size: ' + queue_length);
 	// Find accounts that need checking
-	if(queue_length < process.env.BATCHSIZE/2){
+	if(queue_length < parseInt(process.env.BATCHSIZE)/2){
 		db.collection("accounts")
 		.aggregate(
 		[
 			{ $match:
 				{$or:[
 					{next_update_msec: { $exists:false } },
-					{ next_update_msec: { $lt: Date.now() + process.env.BATCHTIME} }
+					{ next_update_msec: { $lt: Date.now() + parseInt(process.env.BATCHTIME)/2} }
 				]}
 			},
 			{ $sample: { size: parseInt(process.env.BATCHSIZE) } },
