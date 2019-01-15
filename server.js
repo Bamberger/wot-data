@@ -54,7 +54,7 @@ function mainCode() {
     db.collection("accounts")
     .aggregate(
       [
-		{ $sample: { size: (parseInt(process.env.SAMPLESIZE)) } },
+		// { $sample: { size: (parseInt(process.env.SAMPLESIZE)) } },
         { $match:
         //   {$and:[
             {$or:[
@@ -82,11 +82,11 @@ function mainCode() {
 		//Save AccountInfo to S3
 		.then((account_info) => saveAccountInfo(account_info))
 		// Get Tank Stats from WG API and trim
-		.then((last_battle_time) => getTankStats(result[0]['account_id'], region, last_battle_time))
+		.then((last_battle_time) => getTankStats(result[0]['account_id'], result[0]['region'], last_battle_time))
 		// Save Tank Stats to S3
 		.then((tank_stats) => saveTankStats(tank_stats))
 		// Update DB with last_battle_time -> next_update_msec
-		.then((last_battle_time) => updateAccounts(result[0]['account_id'], region, last_battle_time))
+		.then((last_battle_time) => updateAccounts(result[0]['account_id'], result[0]['region'], last_battle_time))
 		// Catch any errors
 		.catch(err => console.log("ERROR: " + err));
 
