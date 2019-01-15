@@ -14,6 +14,8 @@ const dbName = process.env.DBNAME;
 const client = new MongoClient(dbUrl, {
 	useNewUrlParser: true
 });
+// Create queue for accounts
+var queue_accounts = [];
 
 // WG API details for each region
 var config = {};
@@ -22,6 +24,7 @@ config.sea = {};
 config.sea.api_account_list = 'http://api.worldoftanks.asia/wot/account/list/';
 config.sea.api_account_info = 'http://api.worldoftanks.asia/wot/account/info/';
 config.sea.api_tanks_stats = 'https://api.worldoftanks.asia/wot/tanks/stats/';
+config.sea.api_profile_summary = 'https://worldoftanks.asia/wotup/profile/summary/';
 
 // Heroku Web Keepalive
 setInterval(function() {
@@ -41,56 +44,127 @@ client.connect(function(err) {
 	assert.equal(null, err);
 	console.log("Connected successfully to server");
 
-	// Once the connection is established, start the main loop
+	// Once the connection is established, start the main loops
+	setInterval(fillQueue, process.env.BATCHTIME)
 	setInterval(mainCode, loopMsec);
 });
 
-// Main Code, Gets 1 account_id from the DB for the specified region
+// Main Code
 function mainCode() {
 	// console.log('Running Loop');
-	const db = client.db(dbName);
+	// const db = client.db(dbName);
 
-	// Run the DB query
-    db.collection("accounts")
-    .aggregate(
-      [
-		// { $sample: { size: (parseInt(process.env.SAMPLESIZE)) } },
-        { $match:
-        //   {$and:[
-            {$or:[
-              {next_update_msec: { $exists:false } },
-              { next_update_msec: { $lt: Date.now() } }
-            ]},
-            // { region: region }
-        //   ]}
-		},
-		{ $sample: { size: 1 } },
-        { $project: { _id: 0, account_id: 1, region: 1, last_battle_time: 1 } }
-        ]
-    )
-		.toArray(function(err, result) {
-			if (err) throw err;
+	if(queue_accounts.length != 0){
+		removeDups(queue_accounts);
+		var account = queue_accounts.shift();
+		// console.log(account)
 
-			if(Object.keys(result).length === 0){
-				console.log('DB CHECK - No accounts to update')
-				return;
-			}
-      
-		// Post getTankStats chain
 		//Get the Account Info from WG API and trim
-		getAccountInfo(result[0]['account_id'], result[0]['region'], result[0]['last_battle_time'])
+		getAccountInfo(account['account_id'], account['region'], account['last_battle_time'])
 		//Save AccountInfo to S3
 		.then((account_info) => saveAccountInfo(account_info))
 		// Get Tank Stats from WG API and trim
-		.then((last_battle_time) => getTankStats(result[0]['account_id'], result[0]['region'], last_battle_time))
+		.then((last_battle_time) => getTankStats(account['account_id'], account['region'], last_battle_time))
 		// Save Tank Stats to S3
 		.then((tank_stats) => saveTankStats(tank_stats))
 		// Update DB with last_battle_time -> next_update_msec
-		.then((last_battle_time) => updateAccounts(result[0]['account_id'], result[0]['region'], last_battle_time))
+		.then((last_battle_time) => updateAccounts(account['account_id'], account['region'], last_battle_time))
 		// Catch any errors
 		.catch(err => console.log("ERROR: " + err));
+	}
+	else {
+		// console.log('DB CHECK - No accounts to update');
+		return;
+	}
 
+
+}
+
+function fillQueue() {
+	const db = client.db(dbName);
+	queue_length = queue_accounts.length;
+	console.log('Queue size: ' + queue_length);
+	// Find accounts that need checking
+	if(queue_length < process.env.BATCHSIZE/2){
+		db.collection("accounts")
+		.aggregate(
+		[
+			{ $match:
+				{$or:[
+					{next_update_msec: { $exists:false } },
+					{ next_update_msec: { $lt: Date.now() + process.env.BATCHTIME} }
+				]}
+			},
+			{ $sample: { size: parseInt(process.env.BATCHSIZE) } },
+			{ $project: { _id: 0, account_id: 1, region: 1, last_battle_time: 1 } }
+			]
+		)
+		.toArray(function(err, accountlist) {
+			if (err) throw err;
+			if(Object.keys(accountlist).length === 0){
+				// console.log('DB CHECK - No accounts to update')
+				return;
+			}
+			for (i in accountlist) {
+				getBattleCount(accountlist[i])
+				.then((account_object) => getProfileSummary(account_object))
+			};
+		})
+	}
+}
+
+function getBattleCount(account) {
+	const db = client.db(dbName);
+	// console.log(account['account_id']);
+	// console.log(account);
+	// Check how many random battles our last snapshot had from DB
+	return new Promise(function(resolve, reject) {
+		db.collection("account_info")
+		.aggregate([
+			{$match: {"account_id": account['account_id']}},
+			{$project: {"account_id": "$account_id", "random_battles": "$statistics.random.battles", "region": "$region"}},
+			{$sort: {random_battles: -1}},
+			{$limit: 1}
+			])
+		.toArray(function(err,account_object) {
+			if (err) reject(err);
+			else { 
+				account_object[0]['last_battle_time'] = account['last_battle_time'];
+				resolve(account_object[0]);
+			};
 		});
+	});
+}
+
+function getProfileSummary(account_object){
+	var region = account_object['region'];
+	// Setting URL and headers for request
+	var propertiesObject = {
+		spa_id: account_object['account_id'],
+		language: 'en' // Not sure if this actually does anything
+	};
+	var options = {
+		url: config[region].api_profile_summary,
+		qs: propertiesObject
+	};
+	// Start Promise
+	return new Promise(function(resolve, reject) {
+		// Get latest profile stats from public API
+		request.get(options, function(err, resp, body) {
+			if (err) {
+				reject(err);
+			} else {
+				var profile_summary = JSON.parse(body);
+				// console.log(profile_summary);
+				if(profile_summary['data']['battles_count'] != account_object['random_battles']){
+					// console.log('Battle counts do not match');
+					// console.log('                  MAKE SURE YOU THIS IS NOT EQ');
+					queue_accounts.push(account_object)
+					// console.log(queue_accounts)
+				}
+			}
+		})
+	})
 }
 
 function getAccountInfo(account_id, region,) {
@@ -328,3 +402,13 @@ function deleteAccount(account_id,region){
 	
 
 }
+
+function removeDups(names) {
+	let unique = {};
+	names.forEach(function(i) {
+	  if(!unique[i]) {
+		unique[i] = true;
+	  }
+	});
+	return Object.keys(unique);
+  }
