@@ -159,15 +159,9 @@ function getBattleCount(account) {
 			if (err) reject(err);
 			if (account_object.length === 0) {
 				queue_accounts.push(account);
-				reject('BATTLE COUNT: No account_info for account_id: ' + account['account_id']);
 			}
 			else { 
-				// try {		
 				account_object[0]['last_battle_time'] = account['last_battle_time'];
-				// } catch (error) {
-				// 	console.log('*** ERROR *** ' + account['account_id'] + ' err: ' + error)
-				// 	console.log( '*** ERRO2:*** ' + account_object.length)
-				// }
 				resolve(account_object[0]);
 			};
 		});
