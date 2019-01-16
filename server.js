@@ -125,14 +125,18 @@ function fillQueue() {
 				return;
 			}
 			for (i in accountlist) {
+				// If a last_battle_time exists, check before adding to queue
 				if(accountlist[i].hasOwnProperty("last_battle_time")) {
 					getBattleCount(accountlist[i])
 					.then((account_object) => getProfileSummary(account_object))
 				}
-				else {
+				// If there was no last_battle_time but the region exists, add it to the queue
+				else if (accountlist[i].hasOwnProperty("region")){
 					accountlist[i]['last_battle_time'] = 0;
 					queue_accounts.push(accountlist[i]);
 				}
+				// If we get this far something has gone very wrong and the problem account will stay forever.
+				// TODO: Handle this somehow
 			};
 		})
 	}
@@ -153,8 +157,17 @@ function getBattleCount(account) {
 			])
 		.toArray(function(err,account_object) {
 			if (err) reject(err);
+			if (account_object.length === 0) {
+				queue_accounts.push(account);
+				reject('BATTLE COUNT: No account_info for account_id: ' + account['account_id']);
+			}
 			else { 
+				// try {		
 				account_object[0]['last_battle_time'] = account['last_battle_time'];
+				// } catch (error) {
+				// 	console.log('*** ERROR *** ' + account['account_id'] + ' err: ' + error)
+				// 	console.log( '*** ERRO2:*** ' + account_object.length)
+				// }
 				resolve(account_object[0]);
 			};
 		});
