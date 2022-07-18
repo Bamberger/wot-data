@@ -1,9 +1,12 @@
 const MongoClient = require('mongodb').MongoClient;
 const assert = require('assert');
 const request = require("request");
+const dotenv = require('dotenv');
+dotenv.config();
 
 // msec between loop
 const loopMsec = process.env.LOOPTIME;
+console.log('Loop time: ' + process.env.LOOPTIME);
 // Region - sea, ru, na or eu
 // const region = process.env.REGION;
 // Mongo Connection URL
